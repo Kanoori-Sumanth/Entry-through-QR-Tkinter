@@ -106,7 +106,7 @@ def openGenerator(win):
 	showFrame(qrLabel,dumImg)
 
 	warnVal = StringVar()
-	warnLabel = Label(formFrame,textvariable=warnVal,font=("Times 30"))		# used to display any warnings like field missing, already exists, or data length issues to the user
+	warnLabel = Label(formFrame,textvariable=warnVal,font=("Times 20"))		# used to display any warnings like field missing, already exists, or data length issues to the user
 	warnLabel.grid(row=6,column=0,columnspan=2)
 
 	submitBtn = Button(formFrame,text="Submit",font=frameFont,command=lambda:createQR(idEntry,nameEntry,mobEntry,parMobEntry,genWin,qrLabel,qrCapVal,warnVal))
