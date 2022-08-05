@@ -33,7 +33,8 @@ def createQR(idEntry,nameEntry,mobEntry,parMobEntry,genWin,qrLabel,qrCapVal,warn
 		existing = os.listdir(folName)
 
 		if(file_name not in existing):
-			img = qrcode.make(text)	# would be converted to encrypted form in future
+			img = qrcode.make(idEntry.get())	# would be converted to encrypted form in future
+			
 			img.save(file_path)
 
 		else:
@@ -137,7 +138,8 @@ def readAndDecode(cap,camLabel,detector,t1,idVal,nameVal,mobVal,parMobVal,timeVa
 		nameVal.set(dataList[1])
 		mobVal.set(dataList[2])
 		parMobVal.set(dataList[3])
-		date = str(datetime.fromtimestamp(1887639468))		# print date and time from POSIX timestamp
+		# date = str(datetime.fromtimestamp(1887639468))		# print date and time from POSIX timestamp
+		date = str(datetime.fromtimestamp(time.time()))
 		print(date)
 		timeVal.set(date)
 
@@ -154,6 +156,9 @@ def readAndDecode(cap,camLabel,detector,t1,idVal,nameVal,mobVal,parMobVal,timeVa
 
 
 	camLabel.after(10,readAndDecode,cap,camLabel,detector,t1,idVal,nameVal,mobVal,parMobVal,timeVal)
+
+def addStudent(idEntry,nameEntry,mobEntry,parMobEntry,timeEntry,inoutVal):
+	print(idEntry.get()+" - "+nameEntry.get()+" - "+mobEntry.get()+" - "+parMobEntry.get()+" - "+timeEntry.get()+" - "+inoutVal.get())
 
 
 def openScanner(win):
@@ -211,6 +216,13 @@ def openScanner(win):
 	timeVal = StringVar()
 	timeEntry = Entry(rightFrame,font=frameFont,textvariable=timeVal)
 	timeEntry.grid(row=5,column=1,padx=10,pady=10)
+
+	inoutVal = StringVar()
+	inoutdrop = OptionMenu(rightFrame,inoutVal,*["In","Out"])
+	inoutdrop.grid(row=6,column=1,columnspan=2,padx=10,pady=10)
+
+	addBtn = Button(rightFrame,text="Submit",font=frameFont,command=lambda:addStudent(idEntry,nameEntry,mobEntry,parMobEntry,timeEntry,inoutVal))
+	addBtn.grid(row=7,column=0,columnspan=2,padx=10,pady=10)
 
 
 	cap = cv2.VideoCapture(0)
