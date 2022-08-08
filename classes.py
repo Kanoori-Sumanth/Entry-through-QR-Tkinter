@@ -52,9 +52,6 @@ class Window(Toplevel):
 
 class ValidatorClass:
 
-	# def __init__(self):
-	# 	pass
-
 	def check_id(self,strg):
 		if(len(strg)!=7):
 			return False
@@ -91,7 +88,6 @@ class QRGenerator(Window):
 
 		try:
 			self.records = json.load(jsonFile)
-			print(self.records)
 		except json.decoder.JSONDecodeError:
 			messagebox.showwarning("Warning","Somethings wrong with json file or empty file",parent=self)
 			self.records = {}
@@ -149,10 +145,6 @@ class QRGenerator(Window):
 		qrCapLabel.grid(row=1,column=0)
 
 
-		self.warnVal = StringVar()
-		warnLabel = Label(formFrame,textvariable=self.warnVal,font=("Times 20"))		# used to display any warnings like field missing, already exists, or data length issues to the user
-		warnLabel.grid(row=7,column=0,columnspan=2)
-
 		submitBtn = Button(formFrame,text="Submit",font=self.frameFont,command=lambda:self.createQR())
 		submitBtn.grid(row=6,column=0,columnspan=2,pady=30)
 
@@ -163,7 +155,7 @@ class QRGenerator(Window):
 		parMobEntryVal = self.parMobVal.get().strip()
 		yearVal = self.yearVal.get()
 
-		text = "%s,%s,%s,%s"%(nameEntryVal, mobEntryVal, parMobEntryVal,yearVal)	# would be saved in json model and not included in QR in the future
+		text = "%s,%s,%s,%s"%(nameEntryVal, mobEntryVal, parMobEntryVal,yearVal)	# fields be saved in json model and not included in QR
 
 		if(self.validator.check_id(idEntryVal)):
 			if(self.validator.check_name(nameEntryVal) and len(nameEntryVal)>0):
@@ -201,8 +193,7 @@ class QRGenerator(Window):
 
 
 
-								qr = qrcode.make(idEntryVal)
-								# qr = qrcode.make(self.idVal.get())	# would be converted to encrypted form in future
+								qr = qrcode.make(idEntryVal)		# would be converted to encrypted form in future
 								
 								qr.save(file_path)
 
@@ -309,19 +300,16 @@ class QRScanner(Window):
 
 
 
-# bring all below code into above try block
-
-
 
 	def addStudent(self):
 		if(len(self.inoutVal.get())>0):
 			print(self.idVal.get()+" - "+self.nameVal.get()+" - "+self.mobVal.get()+" - "+self.parMobVal.get()+" - "+self.timeVal.get()+" - "+self.inoutVal.get())
+			# add script to write data to excel sheet
 		else:
 			messagebox.showwarning("Error","Select IN/OUT !",parent=self)
 
 
 	def readAndDecode(self,t1):
-		# cap,camLabel,detector,t1,idVal,nameVal,mobVal,parMobVal,timeVal
 		camImg = cv2.cvtColor(self.cap.read()[1],cv2.COLOR_BGR2RGB)
 		Window.showFrame(self,self.camLabel,camImg)
 
@@ -337,18 +325,14 @@ class QRScanner(Window):
 			self.parMobVal.set(currentRecord["parent mobile"])
 			self.yearVal.set(currentRecord["year"])
 			date = str(datetime.fromtimestamp(time.time()))
-			# date = date[len(date)-5]
 			self.timeVal.set(date)
 
-			# add script to write data to excel sheet
 
 			return qrdata,True
 
 		t2 = time.time()
 		if(cv2.waitKey(1) & 0xFF==ord('q') or (t2-t1>5)):
-			# print("Not detected")
 			messagebox.showwarning("Warning","QR code not detected",parent=self)
-			# self.cap.release()
 			return "",False
 
 
