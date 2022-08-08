@@ -1,0 +1,7 @@
+qrcode
+opencv-python
+json
+re
+numpy
+tk
+Pillow
