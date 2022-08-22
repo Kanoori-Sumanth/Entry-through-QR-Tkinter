@@ -1,18 +1,24 @@
 import os
+import os.path
 import sys
 import qrcode
 import cv2
 import time
 import json
 import re
+import traceback
 import numpy as np
+import pandas as pd
 from tkinter import *
 from tkinter import messagebox
 from PIL import Image,ImageTk
 from datetime import datetime
+from datetime import date
+
 
 
 class MainWin(Tk):
+
 	def __init__(self,title,geometry):
 		Tk.__init__(self)
 		self.title(title)
@@ -30,10 +36,11 @@ class MainWin(Tk):
 
 	def openGenerator(self,mainWin):
 		genWin = QRGenerator(mainWin,"QR Generator","1000x500")
+		genWin["background"] = "#9fafca"
 
 	def openScanner(self,mainWin):
 		scanWin = QRScanner(mainWin,"QR Scanner","1250x800")
-
+		scanWin["background"] = "#9fafca"
 
 
 class Window(Toplevel):
@@ -82,6 +89,10 @@ class QRGenerator(Window):
 
 		self.frameFont = ("Times 20")
 		self.folName = "qrc"
+
+		if not(os.path.exists("student-data.json")):
+			with open("student-data.json","w") as stjson:
+				stjson.write("")
 		jsonFile = open("student-data.json","r")
 
 		self.validator = ValidatorClass()
@@ -98,6 +109,7 @@ class QRGenerator(Window):
 		# ---------------- frame to take details from user ----------------
 		formFrame = Frame(self)
 		formFrame.grid(row=0,column=0,padx=50,pady=0)
+		# formFrame["background"] = "#fff08d"
 
 		headLabel = Label(formFrame,text="Enter student details",font=("Times 30"),highlightbackground="black", highlightthickness=2)
 		headLabel.grid(row=0,column=0,columnspan=2,padx=10,pady=30)
@@ -132,6 +144,7 @@ class QRGenerator(Window):
 		# ---------------- frame to display QR code generated ----------------
 
 		qrFrame = Frame(self)
+		# qrFrame["background"] = "#fff08d"
 		qrFrame.grid(row=0,column=1,padx=50,pady=50)
 
 		self.qrLabel = Label(qrFrame)
@@ -166,7 +179,6 @@ class QRGenerator(Window):
 							file_name += ".png"
 							file_path = self.folName + "/" + self.idVal.get() + ".png"
 
-							self.warnVal.set("")
 
 
 							if not os.path.isdir(self.folName):
@@ -198,7 +210,7 @@ class QRGenerator(Window):
 								qr.save(file_path)
 
 							else:
-								self.warnVal.set("QR for %s already exists"%(file_name))
+								messagebox.showwarning("Warning","QR for %s already exists"%(file_name),parent=self)
 
 
 							imgtk = ImageTk.PhotoImage(Image.open(file_path))
@@ -216,9 +228,6 @@ class QRGenerator(Window):
 				messagebox.showwarning("Error","Name invalid! \n(Only A-z and . are allowed)",parent=self)
 		else:
 			messagebox.showwarning("Error","ID number invalid!",parent=self)
-
-
-
 
 
 class QRScanner(Window):
@@ -278,13 +287,15 @@ class QRScanner(Window):
 			timeEntry = Entry(rightFrame,font=self.frameFont,textvariable=self.timeVal)
 			timeEntry.grid(row=6,column=1,padx=10,pady=10)
 
-			Label(rightFrame,text="In/Out",font=self.frameFont).grid(row=7,column=0,padx=10,pady=10)
-			self.inoutVal = StringVar()
-			inoutdrop = OptionMenu(rightFrame,self.inoutVal,*["In","Out"])
-			inoutdrop.grid(row=7,column=1,padx=10,pady=10)
+			# Label(rightFrame,text="In/Out",font=self.frameFont).grid(row=7,column=0,padx=10,pady=10)
+			# self.inoutVal = StringVar()
+			# inoutdrop = OptionMenu(rightFrame,self.inoutVal,*["In","Out"])
+			# inoutdrop.grid(row=7,column=1,padx=10,pady=10)
 
 			addBtn = Button(rightFrame,text="Submit",font=self.frameFont,command=lambda:self.addStudent())
-			addBtn.grid(row=8,column=0,columnspan=2,padx=10,pady=10)
+			# addBtn.grid(row=8,column=0,columnspan=2,padx=10,pady=10)
+			addBtn.grid(row=7,column=0,columnspan=2,padx=10,pady=10)
+
 
 
 			self.cap = cv2.VideoCapture(0)
@@ -292,7 +303,9 @@ class QRScanner(Window):
 			camBtn = Button(leftFrame,text="Scan",command=lambda:self.readAndDecode(time.time()),font=("Times 20"))
 			camBtn.grid(row=1,column=0)
 
+
 		except FileNotFoundError:
+			print("student-data.json not found")
 			messagebox.showwarning("Error","student-data.json file missing",parent=self)
 
 		except json.decoder.JSONDecodeError:
@@ -302,12 +315,78 @@ class QRScanner(Window):
 
 
 	def addStudent(self):
-		if(len(self.inoutVal.get())>0):
-			print(self.idVal.get()+" - "+self.nameVal.get()+" - "+self.mobVal.get()+" - "+self.parMobVal.get()+" - "+self.timeVal.get()+" - "+self.inoutVal.get())
-			# add script to write data to excel sheet
-		else:
-			messagebox.showwarning("Error","Select IN/OUT !",parent=self)
+		validator = ValidatorClass()
+		if(validator.check_id(self.idVal.get())):
+			try:
+				scanned=f"{self.idVal.get()} - {self.nameVal.get()} - {self.mobVal.get()} - {self.parMobVal.get()} - {self.yearVal.get()} - {self.timeVal.get()}"
+				curRecord = scanned.split(" - ")
+				dat = str(date.today())
+				excel_file_name = dat+"_"+curRecord[4]+".xlsx"
+				yearVal = curRecord[4]
 
+				if not(os.path.exists(excel_file_name)):
+					df = pd.DataFrame({"ID":[],
+										"Name":[],
+										"Mobile":[],
+										"Parent":[],
+										"Year":[],
+										"Out time":[],
+										"In time":[]})
+					new_xl_writer = pd.ExcelWriter(excel_file_name,engine="xlsxwriter")
+					df.to_excel(new_xl_writer,sheet_name="Sheet1",index=False)
+					new_xl_writer.save()
+
+					messagebox.showwarning("Warning","Created new xl file",parent=self)
+				else:
+					messagebox.showwarning("Warning","File already present",parent=self)
+
+
+
+				prevData = pd.read_excel(excel_file_name,sheet_name="Sheet1")
+				
+				print("have read excel file sheet")
+
+				ids = list(prevData["ID"])
+
+				xl_writer = pd.ExcelWriter(excel_file_name,engine="xlsxwriter")
+				print("defined xl_writer")
+
+
+
+				if curRecord[0] in ids:
+					curTime = self.timeVal.get()
+					curRecord.append(curTime)
+					ind = ids.index(curRecord[0])
+					# mask = prevData["ID"]==self.idVal.get()
+					# prevData.loc[mask,"In time"] = curTime
+					# print("------------")
+					# print(prevData)
+					# print("------------")
+					# print("already present. Adding intime")
+					messagebox.showwarning("Warning","Student record found. Adding intime",parent=self)
+
+				else:				
+					curRecord.append("-")
+					ind = len(prevData.index)
+					messagebox.showwarning("Warning","Student record not found. Adding record",parent=self)
+					print("not in prevData")
+
+				prevData.loc[ind] = curRecord
+
+				prevData.to_excel(xl_writer,sheet_name="Sheet1",index=False)
+				print("to_excel done")
+				xl_writer.save()
+				print("xl_writer saved")
+				prevData = None
+
+			except FileNotFoundError:
+				messagebox.showwarning("Warning","Excel file not found!",parent=self)
+
+			except ValueError:
+				messagebox.showwarning("Warning",f"Provided sheet_name {yearVal} not found in excel file.",parent=self)
+		else:
+			messagebox.showwarning("Error","Invalid ID number",parent=self)
+		
 
 	def readAndDecode(self,t1):
 		camImg = cv2.cvtColor(self.cap.read()[1],cv2.COLOR_BGR2RGB)
@@ -315,20 +394,24 @@ class QRScanner(Window):
 
 
 		qrdata,bbox,strai = self.detector.detectAndDecode(camImg)
+		validator = ValidatorClass()
 		if(qrdata):
-			self.idVal.set(qrdata)
+			if validator.check_id(qrdata):
+				self.idVal.set(qrdata)
 
-			currentRecord = self.records[qrdata]
+				currentRecord = self.records[qrdata]
 
-			self.nameVal.set(currentRecord["name"])
-			self.mobVal.set(currentRecord["mobile"])
-			self.parMobVal.set(currentRecord["parent mobile"])
-			self.yearVal.set(currentRecord["year"])
-			date = str(datetime.fromtimestamp(time.time()))
-			self.timeVal.set(date)
+				self.nameVal.set(currentRecord["name"])
+				self.mobVal.set(currentRecord["mobile"])
+				self.parMobVal.set(currentRecord["parent mobile"])
+				self.yearVal.set(currentRecord["year"])
+				date = str(datetime.fromtimestamp(time.time()))
+				self.timeVal.set(date)
 
 
-			return qrdata,True
+				return qrdata,True
+			else:
+				messagebox.showwarning("Error","Invalid QR",parent=self)
 
 		t2 = time.time()
 		if(cv2.waitKey(1) & 0xFF==ord('q') or (t2-t1>5)):
