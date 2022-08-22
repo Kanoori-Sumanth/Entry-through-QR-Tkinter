@@ -1,7 +1,13 @@
+os
+sys
 qrcode
 opencv-python
+time
 json
 re
+traceback
 numpy
+pandas
 tk
 Pillow
+datetime
