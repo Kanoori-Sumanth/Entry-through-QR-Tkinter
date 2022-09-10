@@ -1,12 +1,9 @@
-import os
 import os.path
-import sys
 import qrcode
 import cv2
 import time
 import json
 import re
-import traceback
 import numpy as np
 import pandas as pd
 from tkinter import *
@@ -39,6 +36,11 @@ class MainWin(Tk):
 		genWin["background"] = "#9fafca"
 
 	def openScanner(self,mainWin):
+		try:
+			jsonFile = open("student-data.json","r")
+		except FileNotFoundError:
+			with open("student-data.json","w") as fp:
+				fp.write("{\n}")
 		scanWin = QRScanner(mainWin,"QR Scanner","1250x800")
 		scanWin["background"] = "#9fafca"
 
@@ -62,7 +64,7 @@ class ValidatorClass:
 	def check_id(self,strg):
 		if(len(strg)!=7):
 			return False
-		if(not(strg[0]=='N' or strg[0]=='S')):
+		if(not(strg[0]=='N' or strg[0]=='n' or strg[0]=='S' or strg[0]=='s')):
 			return False
 		if(not(strg[1:].isdigit())):
 			return False
@@ -162,7 +164,7 @@ class QRGenerator(Window):
 		submitBtn.grid(row=6,column=0,columnspan=2,pady=30)
 
 	def createQR(self):
-		idEntryVal = self.idVal.get().strip()
+		idEntryVal = self.idVal.get().strip().capitalize()
 		nameEntryVal = self.nameVal.get().strip()
 		mobEntryVal = self.mobVal.get().strip()
 		parMobEntryVal = self.parMobVal.get().strip()
@@ -175,9 +177,9 @@ class QRGenerator(Window):
 				if(self.validator.check_num(mobEntryVal)):
 					if(self.validator.check_num(parMobEntryVal)):
 						if(len(yearVal)>0):
-							file_name = self.idVal.get()
+							file_name = idEntryVal
 							file_name += ".png"
-							file_path = self.folName + "/" + self.idVal.get() + ".png"
+							file_path = self.folName + "/" + file_name
 
 
 
@@ -354,7 +356,7 @@ class QRScanner(Window):
 
 
 				if curRecord[0] in ids:
-					curTime = self.timeVal.get()
+					curTime = str(datetime.fromtimestamp(time.time()))
 					curRecord.append(curTime)
 					ind = ids.index(curRecord[0])
 					# mask = prevData["ID"]==self.idVal.get()
