@@ -8,6 +8,7 @@ re
 traceback
 numpy
 pandas
+xlsxwriter
 tk
 Pillow
 datetime
