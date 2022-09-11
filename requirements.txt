@@ -5,7 +5,6 @@ opencv-python
 time
 json
 re
-traceback
 numpy
 pandas
 xlsxwriter
