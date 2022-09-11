@@ -15,7 +15,6 @@ from datetime import date
 
 
 class MainWin(Tk):
-
 	def __init__(self,title,geometry):
 		Tk.__init__(self)
 		self.title(title)
@@ -59,7 +58,7 @@ class Window(Toplevel):
 		label.configure(image = imgtk)
 
 
-class ValidatorClass:
+class ValidatorClass:	# form validator class
 
 	def check_id(self,strg):
 		if(len(strg)!=7):
@@ -95,6 +94,7 @@ class QRGenerator(Window):
 		if not(os.path.exists("student-data.json")):
 			with open("student-data.json","w") as stjson:
 				stjson.write("")
+				
 		jsonFile = open("student-data.json","r")
 
 		self.validator = ValidatorClass()
@@ -111,7 +111,6 @@ class QRGenerator(Window):
 		# ---------------- frame to take details from user ----------------
 		formFrame = Frame(self)
 		formFrame.grid(row=0,column=0,padx=50,pady=0)
-		# formFrame["background"] = "#fff08d"
 
 		headLabel = Label(formFrame,text="Enter student details",font=("Times 30"),highlightbackground="black", highlightthickness=2)
 		headLabel.grid(row=0,column=0,columnspan=2,padx=10,pady=30)
@@ -146,7 +145,6 @@ class QRGenerator(Window):
 		# ---------------- frame to display QR code generated ----------------
 
 		qrFrame = Frame(self)
-		# qrFrame["background"] = "#fff08d"
 		qrFrame.grid(row=0,column=1,padx=50,pady=50)
 
 		self.qrLabel = Label(qrFrame)
@@ -223,11 +221,11 @@ class QRGenerator(Window):
 						else:
 							messagebox.showwarning("Error","Select Year!",parent=self)
 					else:
-						messagebox.showwarning("Error","Parent mobile number invalid!",parent=self)
+						messagebox.showwarning("Error","Parent mobile number invalid!\n(start with 6-9 & has 10 digits)",parent=self)
 				else:
-					messagebox.showwarning("Error","Mobile number invalid!",parent=self)
+					messagebox.showwarning("Error","Mobile number invalid!\n(start with 6-9 & has 10 digits)",parent=self)
 			else:
-				messagebox.showwarning("Error","Name invalid! \n(Only A-z and . are allowed)",parent=self)
+				messagebox.showwarning("Error","Name invalid! \n(Only A-z, ',' and '.' are allowed)",parent=self)
 		else:
 			messagebox.showwarning("Error","ID number invalid!",parent=self)
 
@@ -289,13 +287,7 @@ class QRScanner(Window):
 			timeEntry = Entry(rightFrame,font=self.frameFont,textvariable=self.timeVal)
 			timeEntry.grid(row=6,column=1,padx=10,pady=10)
 
-			# Label(rightFrame,text="In/Out",font=self.frameFont).grid(row=7,column=0,padx=10,pady=10)
-			# self.inoutVal = StringVar()
-			# inoutdrop = OptionMenu(rightFrame,self.inoutVal,*["In","Out"])
-			# inoutdrop.grid(row=7,column=1,padx=10,pady=10)
-
 			addBtn = Button(rightFrame,text="Submit",font=self.frameFont,command=lambda:self.addStudent())
-			# addBtn.grid(row=8,column=0,columnspan=2,padx=10,pady=10)
 			addBtn.grid(row=7,column=0,columnspan=2,padx=10,pady=10)
 
 
@@ -323,7 +315,8 @@ class QRScanner(Window):
 				scanned=f"{self.idVal.get()} - {self.nameVal.get()} - {self.mobVal.get()} - {self.parMobVal.get()} - {self.yearVal.get()} - {self.timeVal.get()}"
 				curRecord = scanned.split(" - ")
 				dat = str(date.today())
-				excel_file_name = dat+"_"+curRecord[4]+".xlsx"
+				branches = {"N":"Nzd","S":"Sklm"}
+				excel_file_name = dat+"_"+curRecord[4]+"_"+branches[self.idVal.get()[0]]+"_"+".xlsx"	# date_branch_year.xlsx
 				yearVal = curRecord[4]
 
 				if not(os.path.exists(excel_file_name)):
@@ -356,18 +349,12 @@ class QRScanner(Window):
 
 
 				if curRecord[0] in ids:
-					curTime = str(datetime.fromtimestamp(time.time()))
+					curTime = datetime.now().strftime("%H:%M:%S")
 					curRecord.append(curTime)
 					ind = ids.index(curRecord[0])
-					# mask = prevData["ID"]==self.idVal.get()
-					# prevData.loc[mask,"In time"] = curTime
-					# print("------------")
-					# print(prevData)
-					# print("------------")
-					# print("already present. Adding intime")
 					messagebox.showwarning("Warning","Student record found. Adding intime",parent=self)
 
-				else:				
+				else:
 					curRecord.append("-")
 					ind = len(prevData.index)
 					messagebox.showwarning("Warning","Student record not found. Adding record",parent=self)
@@ -407,7 +394,7 @@ class QRScanner(Window):
 				self.mobVal.set(currentRecord["mobile"])
 				self.parMobVal.set(currentRecord["parent mobile"])
 				self.yearVal.set(currentRecord["year"])
-				date = str(datetime.fromtimestamp(time.time()))
+				date = datetime.now().strftime("%H:%M:%S")
 				self.timeVal.set(date)
 
 
